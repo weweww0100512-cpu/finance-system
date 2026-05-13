@@ -673,11 +673,12 @@ async function exportExcel(){
   const period=document.getElementById('exp-period').value;const now=new Date();
   if(period==='month'){const m=now.toISOString().slice(0,7);txs=txs.filter(t=>t.date.startsWith(m));}
   if(period==='year'){const y=now.getFullYear().toString();txs=txs.filter(t=>t.date.startsWith(y));}
+  // A=التاريخ B=النوع C=التصنيف D=البيان E=المبلغ F=ملاحظات G=الحساب
   const txRows=[['التاريخ','النوع','التصنيف','البيان','المبلغ','ملاحظات','الحساب'],...txs.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[t.date,t.type==='income'?'إيراد':'مصروف',t.categoryId?cm[t.categoryId]||'':'',t.description,t.amount,t.notes||'',am[t.accountId]||''])];
   const acRows=[['اسم الحساب','النوع','الرصيد الافتتاحي','العملة','ملاحظات'],...ac.map(a=>[a.name,ATYPES[a.type]||a.type,a.balance||0,a.currency||'',a.notes||''])];
   const wb=XLSX.utils.book_new();
   const ws1=XLSX.utils.aoa_to_sheet(txRows);const ws2=XLSX.utils.aoa_to_sheet(acRows);
-  ws1['!cols']=[{wch:14},{wch:10},{wch:22},{wch:35},{wch:14},{wch:30},{wch:22}];
+  ws1['!cols']=[{wch:14},{wch:12},{wch:22},{wch:35},{wch:12},{wch:30},{wch:22}];
   ws2['!cols']=[{wch:25},{wch:15},{wch:15},{wch:12},{wch:25}];
   XLSX.utils.book_append_sheet(wb,ws1,'الحركات');XLSX.utils.book_append_sheet(wb,ws2,'الحسابات');
   XLSX.writeFile(wb,`النظام_المالي_${now.toISOString().slice(0,10)}.xlsx`);toast('تم التصدير بنجاح ✓');
@@ -685,9 +686,10 @@ async function exportExcel(){
 async function exportReportExcel(){
   const r=window._rep;if(!r){toast('يرجى عرض التقرير أولاً',false);return;}
   const from=document.getElementById('rep-from').value;const to=document.getElementById('rep-to').value;
+  // A=التاريخ B=النوع C=التصنيف D=البيان E=المبلغ F=ملاحظات G=الحساب
   const rows=[['التاريخ','النوع','التصنيف','البيان','المبلغ','ملاحظات','الحساب'],...r.filtered.map(t=>[t.date,t.type==='income'?'إيراد':'مصروف',t.categoryId&&r.catMap[t.categoryId]?r.catMap[t.categoryId].name:'',t.description,t.amount,t.notes||'',r.acctMap[t.accountId]?.name||''])];
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:14},{wch:10},{wch:22},{wch:35},{wch:14},{wch:30},{wch:22}];
+  ws['!cols']=[{wch:14},{wch:12},{wch:22},{wch:35},{wch:12},{wch:30},{wch:22}];
   XLSX.utils.book_append_sheet(wb,ws,`تقرير`);XLSX.writeFile(wb,`تقرير_${from}_${to}.xlsx`);toast('تم تصدير التقرير ✓');
 }
 function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('over');}
