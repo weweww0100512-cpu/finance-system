@@ -324,8 +324,8 @@ tr:hover td{background:var(--bg3)}
     <div class="card-header"><div class="card-title"><i class="ti ti-file-text"></i> نموذج تنسيق الاستيراد</div></div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:11px">يجب أن يحتوي ملف Excel على هذه الأعمدة بالترتيب:</p>
     <div class="table-wrap"><table>
-      <thead><tr><th>التاريخ</th><th>البيان</th><th>الحساب</th><th>التصنيف</th><th>النوع</th><th>طريقة الدفع</th><th>المبلغ</th><th>المرجع</th><th>ملاحظات</th></tr></thead>
-      <tbody><tr><td>2024-01-15</td><td>مثال</td><td>البنك الأهلي</td><td>رواتب</td><td>إيراد</td><td>تحويل بنكي</td><td>5000</td><td>INV-001</td><td>ملاحظة</td></tr></tbody>
+      <thead><tr><th>A — التاريخ</th><th>B — النوع</th><th>C — التصنيف</th><th>D — البيان</th><th>E — المبلغ</th><th>F — ملاحظات</th><th>G — الحساب</th></tr></thead>
+      <tbody><tr><td>2024-01-15</td><td>إيراد</td><td>رواتب</td><td>مثال</td><td>5000</td><td>ملاحظة</td><td>البنك الأهلي</td></tr></tbody>
     </table></div>
     <button class="btn info" style="margin-top:10px" onclick="downloadTemplate()"><i class="ti ti-download"></i> تحميل نموذج فارغ</button>
   </div>
@@ -673,11 +673,11 @@ async function exportExcel(){
   const period=document.getElementById('exp-period').value;const now=new Date();
   if(period==='month'){const m=now.toISOString().slice(0,7);txs=txs.filter(t=>t.date.startsWith(m));}
   if(period==='year'){const y=now.getFullYear().toString();txs=txs.filter(t=>t.date.startsWith(y));}
-  const txRows=[['التاريخ','البيان','الحساب','التصنيف','النوع','طريقة الدفع','المبلغ','المرجع','ملاحظات'],...txs.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[t.date,t.description,am[t.accountId]||'',t.categoryId?cm[t.categoryId]||'':'',t.type==='income'?'إيراد':'مصروف',t.method||'',t.amount,t.ref||'',t.notes||''])];
+  const txRows=[['التاريخ','النوع','التصنيف','البيان','المبلغ','ملاحظات','الحساب'],...txs.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[t.date,t.type==='income'?'إيراد':'مصروف',t.categoryId?cm[t.categoryId]||'':'',t.description,t.amount,t.notes||'',am[t.accountId]||''])];
   const acRows=[['اسم الحساب','النوع','الرصيد الافتتاحي','العملة','ملاحظات'],...ac.map(a=>[a.name,ATYPES[a.type]||a.type,a.balance||0,a.currency||'',a.notes||''])];
   const wb=XLSX.utils.book_new();
   const ws1=XLSX.utils.aoa_to_sheet(txRows);const ws2=XLSX.utils.aoa_to_sheet(acRows);
-  ws1['!cols']=[{wch:12},{wch:30},{wch:20},{wch:20},{wch:10},{wch:15},{wch:12},{wch:15},{wch:25}];
+  ws1['!cols']=[{wch:14},{wch:10},{wch:22},{wch:35},{wch:14},{wch:30},{wch:22}];
   ws2['!cols']=[{wch:25},{wch:15},{wch:15},{wch:12},{wch:25}];
   XLSX.utils.book_append_sheet(wb,ws1,'الحركات');XLSX.utils.book_append_sheet(wb,ws2,'الحسابات');
   XLSX.writeFile(wb,`النظام_المالي_${now.toISOString().slice(0,10)}.xlsx`);toast('تم التصدير بنجاح ✓');
@@ -685,9 +685,9 @@ async function exportExcel(){
 async function exportReportExcel(){
   const r=window._rep;if(!r){toast('يرجى عرض التقرير أولاً',false);return;}
   const from=document.getElementById('rep-from').value;const to=document.getElementById('rep-to').value;
-  const rows=[['التاريخ','البيان','الحساب','التصنيف','النوع','المبلغ'],...r.filtered.map(t=>[t.date,t.description,r.acctMap[t.accountId]?.name||'',t.categoryId&&r.catMap[t.categoryId]?r.catMap[t.categoryId].name:'',t.type==='income'?'إيراد':'مصروف',t.amount])];
+  const rows=[['التاريخ','النوع','التصنيف','البيان','المبلغ','ملاحظات','الحساب'],...r.filtered.map(t=>[t.date,t.type==='income'?'إيراد':'مصروف',t.categoryId&&r.catMap[t.categoryId]?r.catMap[t.categoryId].name:'',t.description,t.amount,t.notes||'',r.acctMap[t.accountId]?.name||''])];
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:20},{wch:10},{wch:12}];
+  ws['!cols']=[{wch:14},{wch:10},{wch:22},{wch:35},{wch:14},{wch:30},{wch:22}];
   XLSX.utils.book_append_sheet(wb,ws,`تقرير`);XLSX.writeFile(wb,`تقرير_${from}_${to}.xlsx`);toast('تم تصدير التقرير ✓');
 }
 function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('over');}
@@ -704,12 +704,12 @@ async function confirmImport(){
   const ac=await dbGetAll('accounts');const ca=await dbGetAll('categories');
   const abn=Object.fromEntries(ac.map(a=>[a.name,a.id]));const cbn=Object.fromEntries(ca.map(c=>[c.name,c.id]));
   let count=0;
-  for(const r of importData){const date=r[0]?.toString().trim();const desc=r[1]?.toString().trim();const amount=parseFloat(r[6]);if(!date||!amount)continue;await dbAdd('transactions',{type:r[4]==='إيراد'?'income':'expense',amount,date,description:desc||'مستورد',accountId:abn[r[2]?.toString().trim()]||null,categoryId:cbn[r[3]?.toString().trim()]||null,method:r[5]?.toString().trim()||'نقدي',ref:r[7]?.toString().trim()||'',notes:r[8]?.toString().trim()||'',createdAt:new Date().toISOString()});count++;}
+  for(const r of importData){const date=r[0]?.toString().trim();const type=r[1]==='إيراد'?'income':'expense';const catName=r[2]?.toString().trim();const desc=r[3]?.toString().trim();const amount=parseFloat(r[4]);const notes=r[5]?.toString().trim()||'';const acctName=r[6]?.toString().trim();if(!date||!amount)continue;await dbAdd('transactions',{type,amount,date,description:desc||'مستورد',accountId:abn[acctName]||null,categoryId:cbn[catName]||null,method:'نقدي',ref:'',notes,createdAt:new Date().toISOString()});count++;}
   importData=[];document.getElementById('import-preview').style.display='none';document.getElementById('excel-file').value='';
   toast(`تم استيراد ${count} حركة بنجاح ✓`);await refreshMetrics();
 }
 function downloadTemplate(){
-  const rows=[['التاريخ','البيان','الحساب','التصنيف','النوع','طريقة الدفع','المبلغ','المرجع','ملاحظات'],['2024-01-15','مثال إيراد','البنك الأهلي','رواتب','إيراد','تحويل بنكي',5000,'INV-001',''],['2024-01-16','مثال مصروف','الصندوق','مصاريف تشغيلية','مصروف','نقدي',1200,'','ملاحظة']];
+  const rows=[['التاريخ','النوع','التصنيف','البيان','المبلغ','ملاحظات','الحساب'],['2024-01-15','إيراد','رواتب','مثال إيراد',5000,'','البنك الأهلي'],['2024-01-16','مصروف','مصاريف تشغيلية','مثال مصروف',1200,'ملاحظة','الصندوق']];
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:20},{wch:10},{wch:15},{wch:12},{wch:15},{wch:25}];
   XLSX.utils.book_append_sheet(wb,ws,'نموذج');XLSX.writeFile(wb,'نموذج_الاستيراد.xlsx');
 }
